@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/res">
+        <file>Media/bee_lock_black.png</file>
+        <file>Media/bee_lock_gold.png</file>
+        <file>options.conf</file>
+    </qresource>
+</RCC>
