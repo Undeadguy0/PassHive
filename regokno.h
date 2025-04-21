@@ -20,7 +20,11 @@ private:
     Ui::RegOkno *ui;
 
 public slots:
-    std::string regist();
+    void regist();
+    void check();
+signals:
+    void nazad();
+
 };
 
 #endif // REGOKNO_H

@@ -1,0 +1,2 @@
+set(__QT_DEPLOY_TARGET_PassHive_FILE /home/undeadguy/PassHive/PassHive)
+set(__QT_DEPLOY_TARGET_PassHive_TYPE EXECUTABLE)

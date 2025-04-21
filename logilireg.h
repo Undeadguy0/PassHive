@@ -24,6 +24,7 @@ signals:
 public slots:
     void vhod();
     void regist();
+    void otkr();
 };
 
 #endif // LOGILIREG_H

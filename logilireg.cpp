@@ -25,3 +25,7 @@ void LogIliReg::regist(){
     close();
     emit reg();
 }
+
+void LogIliReg::otkr(){
+    show();
+}

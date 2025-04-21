@@ -5,7 +5,7 @@
 #include <QLabel>
 #include <string>
 #include <QPushButton>
-#include "configurator.h"
+
 
 PassOkno::PassOkno(QWidget *parent)
     : QWidget(parent)
@@ -35,6 +35,6 @@ void PassOkno::vihod(){
 }
 
 std::string PassOkno::sozd_polz(){
-    Configurator conf;
+    return "";
 
 }

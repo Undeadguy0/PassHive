@@ -36,7 +36,7 @@
     </rect>
    </property>
    <property name="text">
-    <string/>
+    <string>назад</string>
    </property>
   </widget>
   <widget class="QPushButton" name="vvod_knopka">
@@ -49,7 +49,7 @@
     </rect>
    </property>
    <property name="text">
-    <string/>
+    <string>вход</string>
    </property>
   </widget>
   <widget class="QTextEdit" name="parol_dialog">

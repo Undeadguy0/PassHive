@@ -68,7 +68,7 @@
   <widget class="QPushButton" name="regist_knopka">
    <property name="geometry">
     <rect>
-     <x>420</x>
+     <x>430</x>
      <y>320</y>
      <width>80</width>
      <height>41</height>
@@ -81,9 +81,9 @@
   <widget class="QLabel" name="osnov_dialog">
    <property name="geometry">
     <rect>
-     <x>210</x>
+     <x>100</x>
      <y>20</y>
-     <width>221</width>
+     <width>451</width>
      <height>51</height>
     </rect>
    </property>
