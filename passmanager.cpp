@@ -127,33 +127,27 @@ QString PassManager::zakod(QString data, QByteArray kl){
     return QString((iv + encrypted).toBase64());
 }
 
-QString PassManager::raskod(QString zag_data, QByteArray kl){
-    if (zag_data.isEmpty()) {
-        return QString();
-    }
+QString PassManager::raskod(QString zag_data, QByteArray kl)
+{
+    if (zag_data.isEmpty())
+        return {};
 
-    QAESEncryption encryption(QAESEncryption::AES_256, QAESEncryption::CBC);
+    QAESEncryption aes(QAESEncryption::AES_256, QAESEncryption::CBC);
     QByteArray raw = QByteArray::fromBase64(zag_data.toUtf8());
+    if (raw.size() < 16)
+        return QStringLiteral("[Ошибка данных]");
 
-    if (raw.size() < 16) {
-        return QString("[Ошибка данных]");
-    }
-
-    QByteArray iv = raw.left(16);
+    QByteArray iv        = raw.left(16);
     QByteArray encrypted = raw.mid(16);
-    QByteArray decrypted = encryption.decode(encrypted, kl, iv);
 
+    // 1. Расшифровываем
+    QByteArray decrypted = aes.decode(encrypted, kl, iv);
+    // 2. Срезаем ISO-паддинг корректно
+    decrypted = aes.removePadding(decrypted);           // <- ключевая строка
+    // 3. Конвертируем в UTF-8
     QString result = QString::fromUtf8(decrypted);
 
-    // Вот тут происходит фильтрация мусора
-    QString clean_result;
-    for (QChar c : result) {
-        if (c.isPrint() && !c.isNull()) {
-            clean_result.append(c);
-        }
-    }
-
-    return clean_result;
+    return result;   // лишний пост-фильтр больше не нужен
 }
 
 
