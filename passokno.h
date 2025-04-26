@@ -3,6 +3,7 @@
 
 #include <string>
 #include <QWidget>
+#include <QMap>
 
 namespace Ui {
 class PassOkno;
@@ -18,12 +19,14 @@ public:
 
 private:
     Ui::PassOkno *ui;
+    void prov();
+
 public slots:
-   std::string auth();
-   std::string sozd_polz();
    void vihod();
+
 signals:
     void zakroy();
+    void vhod(QMap<QString, QString>);
 
 
 };

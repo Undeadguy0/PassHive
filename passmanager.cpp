@@ -71,7 +71,7 @@ bool PassManager::reg_polz(QString login, QString pass) {
     noviyPolzovatel["sol"] = sol;
     noviyPolzovatel["hash"] = QString(hash.toHex());
     noviyPolzovatel["iteracii"] = ITERACII;
-    noviyPolzovatel["BD"] = 'x';
+    noviyPolzovatel["BD"] = "x";
 
     spisok_polz.append(noviyPolzovatel);
     data["polzovateli"] = spisok_polz;
@@ -128,10 +128,32 @@ QString PassManager::zakod(QString data, QByteArray kl){
 }
 
 QString PassManager::raskod(QString zag_data, QByteArray kl){
+    if (zag_data.isEmpty()) {
+        return QString();
+    }
+
     QAESEncryption encryption(QAESEncryption::AES_256, QAESEncryption::CBC);
     QByteArray raw = QByteArray::fromBase64(zag_data.toUtf8());
+
+    if (raw.size() < 16) {
+        return QString("[Ошибка данных]");
+    }
+
     QByteArray iv = raw.left(16);
     QByteArray encrypted = raw.mid(16);
     QByteArray decrypted = encryption.decode(encrypted, kl, iv);
-    return QString::fromUtf8(decrypted);
+
+    QString result = QString::fromUtf8(decrypted);
+
+    // Вот тут происходит фильтрация мусора
+    QString clean_result;
+    for (QChar c : result) {
+        if (c.isPrint() && !c.isNull()) {
+            clean_result.append(c);
+        }
+    }
+
+    return clean_result;
 }
+
+

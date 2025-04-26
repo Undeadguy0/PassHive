@@ -3,6 +3,7 @@
 #include "PassManager.h"
 #include "logilireg.h"
 #include "regokno.h"
+#include "oknoparoley.h"
 #include <QApplication>
 
 int main(int argc, char *argv[]) {
@@ -13,6 +14,7 @@ int main(int argc, char *argv[]) {
     RegOkno reg;
     MainWindow osn_okno;
     PassManager ps;
+    OknoParoley ok;
 
     ps.init_hran();
 
@@ -20,7 +22,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(&pass_okno, &PassOkno::zakroy, &master, &QApplication::quit);
     QObject::connect(&start, &LogIliReg::auth, &pass_okno, &PassOkno::show);
     QObject::connect(&start, &LogIliReg::reg, &reg, &RegOkno::show);
-
+    QObject::connect(&pass_okno, &PassOkno::vhod, &ok, &OknoParoley::start);
 
     if(!ps.ne_pust()){
         start.show();

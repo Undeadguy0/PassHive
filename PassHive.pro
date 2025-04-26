@@ -1,5 +1,7 @@
 QT += widgets sql
 
+LIBS += -latomic
+
 CONFIG += c++17
 
 SOURCES += \

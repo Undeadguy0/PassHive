@@ -86,11 +86,15 @@ QList<QMap<QString, QString>> DBPoisk::pol_vse() {
             QString value = dialog.value(i).toString();
             row[column] = value;
         }
+
+        row["id"] = dialog.value("id").toString();
+
         result.append(row);
     }
 
     return result;
 }
+
 
 bool DBPoisk::udal(int r){
     if (!corr_db->open()) return false;

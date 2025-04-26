@@ -65,9 +65,9 @@
   <widget class="QTextEdit" name="name_edit">
    <property name="geometry">
     <rect>
-     <x>300</x>
+     <x>320</x>
      <y>30</y>
-     <width>411</width>
+     <width>391</width>
      <height>51</height>
     </rect>
    </property>
@@ -75,9 +75,9 @@
   <widget class="QTextEdit" name="pass_edit">
    <property name="geometry">
     <rect>
-     <x>300</x>
+     <x>320</x>
      <y>100</y>
-     <width>411</width>
+     <width>391</width>
      <height>51</height>
     </rect>
    </property>
@@ -85,9 +85,9 @@
   <widget class="QTextEdit" name="notice_edit">
    <property name="geometry">
     <rect>
-     <x>300</x>
+     <x>320</x>
      <y>190</y>
-     <width>411</width>
+     <width>391</width>
      <height>181</height>
     </rect>
    </property>
