@@ -8,12 +8,13 @@ class PassManager{
 
     const int ITERACII = 150000;
     const int SOL = 32;
+
+
+public:
     QString sozd_sol();
     QByteArray sozd_hash(QString pass, QByteArray sol);
     QJsonObject zag_data();
     bool sohr_data(QJsonObject data);
-
-public:
     bool init_hran();
     bool reg_polz(QString login, QString pass);
     bool prov_pass(QString login, QString pass);

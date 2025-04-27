@@ -14,7 +14,8 @@ SOURCES += \
     regokno.cpp \
     passmanager.cpp \
     dbpoisk.cpp \
-    oknoparoley.cpp
+    oknoparoley.cpp \
+    sshpodkl.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -25,7 +26,8 @@ HEADERS += \
     regokno.h \
     PassManager.h \
     dbpoisk.h \
-    oknoparoley.h
+    oknoparoley.h \
+    sshpodkl.h
 
 FORMS += \
     mainwindow.ui \
