@@ -7,6 +7,7 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    passgenerator.cpp \
     passokno.cpp \
     logilireg.cpp \
     qaesencryption.cpp \
@@ -17,6 +18,7 @@ SOURCES += \
 
 HEADERS += \
     mainwindow.h \
+    passgenerator.h \
     passokno.h \
     logilireg.h \
     qaesencryption.h \
@@ -27,6 +29,7 @@ HEADERS += \
 
 FORMS += \
     mainwindow.ui \
+    passgenerator.ui \
     passokno.ui \
     logilireg.ui \
     regokno.ui \

@@ -3,6 +3,7 @@
 #include <QMap>
 #include <QDebug>
 #include <QInputDialog>
+#include <QMessageBox>
 
 
 OknoParoley::OknoParoley(QWidget *parent)
@@ -167,29 +168,31 @@ void OknoParoley::udalit() {
         return;
     }
 
-    // Открываем диалог для подтверждения удаления
-    bool ok;
-    QString text = QInputDialog::getText(this,
-                                         "Подтверждение удаления",
-                                         "Для удаления введите слово ПОДТВЕРДИТЬ:",
-                                         QLineEdit::Normal,
-                                         "",
-                                         &ok);
+    QString name = pm->raskod(data[ind]["name"], kluch); // Берем название записи, которую собираемся удалить
 
-    if (!ok || text.trimmed().toUpper() != "ПОДТВЕРДИТЬ") {
-        qDebug() << "Удаление отменено пользователем.";
+    // Запрашиваем подтверждение имени
+    bool ok;
+    QString input = QInputDialog::getText(this,
+                                          "Подтверждение удаления",
+                                          QString("Введите название пароля \"%1\" для подтверждения удаления:").arg(name),
+                                          QLineEdit::Normal,
+                                          "",
+                                          &ok);
+
+    if (!ok || input.trimmed() != name) {
+        qDebug() << "Подтверждение удаления не пройдено.";
+        QMessageBox::warning(this, "Удаление отменено", "Имя не совпадает. Удаление прервано.");
         return;
     }
 
     // Удаляем запись
     int id = data[ind]["id"].toInt();
-
     if (!db->udal(id)) {
-        qDebug() << "Ошибка при удалении записи из БД.";
+        qDebug() << "Ошибка удаления из БД.";
         return;
     }
 
-    // Обновляем список после удаления
+    // Обновляем список
     data = db->pol_vse();
     sm_r('.');
     obnov_spisok(false);
