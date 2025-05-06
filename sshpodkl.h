@@ -1,36 +1,69 @@
-#include <QString>
-#include <QJsonObject>
 
-class SSHPodkl
+
+#pragma once
+
+#include <QtCore>
+#include "PassManager.h"
+
+// Корневой каталог для всех данных PassHive
+static const QString PASSHIVE_ROOT = "/var/lib/passhive";
+
+struct ConnectionInfo
 {
-public:
-    SSHPodkl();
+    QString ip;          // IP/host
+    QString user;        // SSH‑логин
+    QByteArray plainPass;// открытый пароль
+    char dbType;         // 'p' (PostgreSQL) | 'l' (SQLite)
+};
 
-    bool connectUser(const QString& login, char dbType);
-    bool uploadDatabase(const QString& localPath, const QString& remotePath);
-    bool uploadConnects();
+class SSHPodkl : public QObject
+{
+    Q_OBJECT
+public:
+    explicit SSHPodkl(QObject *parent = nullptr);
+
+
+    bool ensureConnection(const QString &login, char dbType, const QString &accountPassword);
+
+    // вспомогательные операции
+    QString ssh(const QString &cmd) const;                                   // произвольная команда
+    bool    sftpUpload(const QString &localPath, const QString &remotePath) const; // SCP‑копия
+
+    // CRUD с шифрованием
+    bool insertPassword(const QString &forUser,
+                        const QString &name,
+                        const QString &pass,
+                        const QString &notice);
+    QList<QVariantMap> selectPasswords(const QString &forUser);
+
+    const ConnectionInfo &connection() const { return m_conn; }
+
+    bool deletePassword(int id, const QString &forUser);
+    bool updatePassword(int id, const QString &forUser, const QString &name, const QString &pass, const QString &notice);
 
 private:
-    QString ip;
-    QString serverOS;
-    QString serverLogin;
-    QByteArray serverPassHash;
+    // JSON‑реестр
+    bool loadRegistry();
+    bool saveRegistry();
 
-    bool isUserInConnects(const QString& login);
-    bool createSystemUser(const QString& rootLogin, const QString& rootPass, const QString& newUser, const QString& password);
-    bool installPackage(const QString& os, const QString& packageName);
-    bool setupNewUser(const QString& login, const QString& password, const QString& detectedOS);
-    bool createDatabaseIfNotExists(const QString& login, char dbType);
-    bool createTableIfNotExists(const QString& login, char dbType);
+    bool bootstrapNewUser(const QString &login, char dbType);
+    bool installPackagesForOS(const QString &os);
+    bool createSystemUser(const QString &login);
 
-    QString sshExecuteCommand(const QString& command);
-    bool sftpUploadFile(const QString& localPath, const QString& remotePath);
 
-    QString detectOS();
-    QString getInstallCommand(const QString& os, const QString& packageName);
+    bool detectOS(QString &outOs);
+    bool initDatabase();
 
-    QJsonObject connectsData;
 
-    bool loadConnectsFile();
-    bool saveConnectsFile();
+    QByteArray encrypt(const QByteArray &plain);
+    QByteArray decrypt(const QByteArray &cipher);
+
+private:
+    QJsonObject    m_registry;   // users.json в /var/lib/passhive
+    ConnectionInfo m_conn;
+    PassManager    m_pm;
+    QString        m_key;        // accountPassword (ключ шифрования)
+
+
+    QString runCmd(const QString &program, const QStringList &args, int timeoutMs = 15000) const;
 };
