@@ -81,7 +81,7 @@
   <widget class="QLabel" name="osnov_dialog">
    <property name="geometry">
     <rect>
-     <x>100</x>
+     <x>230</x>
      <y>20</y>
      <width>451</width>
      <height>51</height>

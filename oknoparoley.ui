@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>726</width>
-    <height>467</height>
+    <height>508</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -95,14 +95,14 @@
   <widget class="QPushButton" name="dobav_knopka">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>370</y>
+     <x>500</x>
+     <y>460</y>
      <width>211</width>
-     <height>61</height>
+     <height>41</height>
     </rect>
    </property>
    <property name="text">
-    <string>Добавить пароль</string>
+    <string>Добавить новый  пароль</string>
    </property>
   </widget>
   <widget class="QPushButton" name="prim_knopka">
@@ -134,7 +134,7 @@
   <widget class="QPushButton" name="del_knopka">
    <property name="geometry">
     <rect>
-     <x>300</x>
+     <x>320</x>
      <y>410</y>
      <width>80</width>
      <height>41</height>
@@ -142,6 +142,29 @@
    </property>
    <property name="text">
     <string>Удалить</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="conn_spisok">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>360</y>
+     <width>91</width>
+     <height>25</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="remote_knopka">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>360</y>
+     <width>101</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Подключиться</string>
    </property>
   </widget>
  </widget>
