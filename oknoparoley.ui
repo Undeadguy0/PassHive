@@ -149,7 +149,7 @@
     <rect>
      <x>10</x>
      <y>360</y>
-     <width>91</width>
+     <width>211</width>
      <height>25</height>
     </rect>
    </property>
@@ -157,14 +157,14 @@
   <widget class="QPushButton" name="remote_knopka">
    <property name="geometry">
     <rect>
-     <x>120</x>
-     <y>360</y>
-     <width>101</width>
+     <x>10</x>
+     <y>460</y>
+     <width>211</width>
      <height>41</height>
     </rect>
    </property>
    <property name="text">
-    <string>Подключиться</string>
+    <string>Подключиться к БД</string>
    </property>
   </widget>
  </widget>

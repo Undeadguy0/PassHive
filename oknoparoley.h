@@ -6,6 +6,7 @@
 #include "PassManager.h"
 #include <QMap>
 #include <QListWidgetItem>
+#include "sshpodkl.h"
 
 namespace Ui {
 class OknoParoley;
@@ -29,6 +30,7 @@ public slots:
     void vstav();                                  // Начало добавления нового пароля
     void red();
     void udalit();
+    void sm_podkl();
 
 signals:
     void obnov(); // Сигнал на обновление
@@ -37,9 +39,18 @@ private:
     Ui::OknoParoley *ui;
     DBPoisk *db;
     PassManager *pm;
+    SSHPodkl *ssh;
+
+    QString guiPass;
+    char soed;
 
     QByteArray kluch = "";
+    QString login = "";
+
     QList<QMap<QString, QString>> data;
+    QList<QVariantMap> udal_data;
+
+
     char rezh; // Режим работы: '.', 'w', 'c', 'a'
 };
 
