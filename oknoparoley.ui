@@ -167,6 +167,19 @@
     <string>Подключиться к БД</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="pass_gen_knopka">
+   <property name="geometry">
+    <rect>
+     <x>320</x>
+     <y>460</y>
+     <width>171</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Генератор паролей</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

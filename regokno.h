@@ -22,8 +22,11 @@ private:
 public slots:
     void regist();
     void check();
+    void generator();
+
 signals:
     void nazad();
+    void start_generator();
 
 };
 

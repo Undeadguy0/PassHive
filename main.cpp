@@ -5,6 +5,7 @@
 #include "regokno.h"
 #include "oknoparoley.h"
 #include <QApplication>
+#include "passgenerator.h"
 
 int main(int argc, char *argv[]) {
     QApplication master(argc, argv);
@@ -15,6 +16,7 @@ int main(int argc, char *argv[]) {
     MainWindow osn_okno;
     PassManager ps;
     OknoParoley ok;
+    PassGenerator pg;
 
     ps.init_hran();
 
@@ -23,6 +25,8 @@ int main(int argc, char *argv[]) {
     QObject::connect(&start, &LogIliReg::auth, &pass_okno, &PassOkno::show);
     QObject::connect(&start, &LogIliReg::reg, &reg, &RegOkno::show);
     QObject::connect(&pass_okno, &PassOkno::vhod, &ok, &OknoParoley::start);
+    QObject::connect(&reg, &RegOkno::start_generator, &pg, &PassGenerator::start);
+    QObject::connect(&ok, &OknoParoley::generator, &pg, &PassGenerator::start);
 
     if(!ps.ne_pust()){
         start.show();

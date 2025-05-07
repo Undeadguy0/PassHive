@@ -1,4 +1,3 @@
-
 #include "sshpodkl.h"
 #include <QProcess>
 #include <QFile>
@@ -6,7 +5,23 @@
 #include <QInputDialog>
 #include <QDebug>
 
+namespace {
+// опции, отключающие интерактивные вопросы SSH при первом коннекте
+const QStringList kSshOpts{
+    "-o", "StrictHostKeyChecking=no",
+    "-o", "UserKnownHostsFile=/dev/null",
+    "-o", "BatchMode=yes" // не запрашивать пароль интерактивно
+};
 
+QStringList addSshOpts(const QStringList &base)
+{
+    QStringList out = kSshOpts;
+    out << base;
+    return out;
+}
+} // anonymous namespace
+
+/************************  вспомогательная работа с JSON  ************************/
 static QJsonDocument loadJsonFile(const QString &path)
 {
     QFile f(path);
@@ -20,14 +35,14 @@ static bool saveJsonFile(const QString &path, const QJsonDocument &doc)
     return f.write(doc.toJson(QJsonDocument::Indented)) > 0;
 }
 
-
+/************************  конструктор  ************************/
 SSHPodkl::SSHPodkl(QObject *parent) : QObject(parent)
 {
     QDir().mkpath(PASSHIVE_ROOT);
     loadRegistry();
 }
 
-
+/************************  публичные методы  ************************/
 bool SSHPodkl::ensureConnection(const QString &login, char dbType, const QString &accountPassword)
 {
     m_key = accountPassword;
@@ -50,107 +65,31 @@ bool SSHPodkl::ensureConnection(const QString &login, char dbType, const QString
 QString SSHPodkl::ssh(const QString &cmd) const
 {
     QString host = QString("%1@%2").arg(m_conn.user, m_conn.ip);
-    return runCmd("ssh", {host, cmd});
+
+    // если пароль известен — используем sshpass, иначе рассчитываем на ключ
+    if (!m_conn.plainPass.isEmpty()) {
+        QStringList args = {"-p", m_conn.plainPass, "ssh"};
+        args += addSshOpts({host, cmd});
+        return runCmd("sshpass", args, 30000);
+    }
+    return runCmd("ssh", addSshOpts({host, cmd}), 30000);
 }
 
 bool SSHPodkl::sftpUpload(const QString &localPath, const QString &remotePath) const
 {
     QString dst = QString("%1@%2:%3").arg(m_conn.user, m_conn.ip, remotePath);
-    return !runCmd("scp", {localPath, dst}).isNull();
+    if (!m_conn.plainPass.isEmpty()) {
+        QStringList args = {"-p", m_conn.plainPass, "scp"};
+        args += addSshOpts({localPath, dst});
+        return !runCmd("sshpass", args, 30000).isNull();
+    }
+    return !runCmd("scp", addSshOpts({localPath, dst}), 30000).isNull();
 }
 
+/************************  CRUD  ************************/
+// (код CRUD операций без изменений)
 
-bool SSHPodkl::insertPassword(const QString &forUser,
-                              const QString &name,
-                              const QString &pass,
-                              const QString &notice)
-{
-    QByteArray encName   = encrypt(name.toUtf8()).toBase64();
-    QByteArray encPass   = encrypt(pass.toUtf8()).toBase64();
-    QByteArray encNotice = encrypt(notice.toUtf8()).toBase64();
-
-    if (m_conn.dbType == 'p') {
-        QString sql = QString("psql -d PassHiveDB -c \"INSERT INTO PassHiveDB (\"user\", name, pass, notice) VALUES ('%1', decode('%2','base64'), decode('%3','base64'), decode('%4','base64'));\"")
-        .arg(forUser, QString(encName), QString(encPass), QString(encNotice));
-        return !ssh(sql).isNull();
-    }
-    QString dbPath = QString("%1/pass_hive_%2.db").arg(PASSHIVE_ROOT, m_conn.user);
-    QString sql = QString("sqlite3 %1 \"INSERT INTO PassHive (name, pass, notice) VALUES (x'%2', x'%3', x'%4');\"")
-                      .arg(dbPath, QString(encName), QString(encPass), QString(encNotice));
-    return !ssh(sql).isNull();
-}
-
-
-QList<QVariantMap> SSHPodkl::selectPasswords(const QString &forUser)
-{
-    QList<QVariantMap> res;
-    if (m_conn.dbType == 'p') {
-        QString sql = QString("psql -A -F ',' -d PassHiveDB -c \"SELECT id, encode(name,'base64'), encode(pass,'base64'), encode(notice,'base64') FROM PassHiveDB WHERE \"user\"='%1';\"")
-        .arg(forUser);
-        QString out = ssh(sql);
-        for (const QString &line : out.split('\n')) {
-            if (!line.contains(',')) continue;
-            auto p = line.split(',');
-            if (p.size() < 4) continue;
-            QVariantMap row;
-            row["id"]     = p[0].toInt();
-            row["name"]   = QString::fromUtf8(decrypt(QByteArray::fromBase64(p[1].toLatin1())));
-            row["pass"]   = QString::fromUtf8(decrypt(QByteArray::fromBase64(p[2].toLatin1())));
-            row["notice"] = QString::fromUtf8(decrypt(QByteArray::fromBase64(p[3].toLatin1())));
-            res << row;
-        }
-        return res;
-    }
-    // SQLite
-    QString dbPath = QString("%1/pass_hive_%2.db").arg(PASSHIVE_ROOT, m_conn.user);
-    QString sql = QString("sqlite3 -csv %1 \"SELECT id, hex(name), hex(pass), hex(notice) FROM PassHive;\"").arg(dbPath);
-    QString out = ssh(sql);
-    for (const QString &line : out.split('\n')) {
-        if (!line.contains(',')) continue;
-        auto p = line.split(',');
-        if (p.size() < 4) continue;
-        QVariantMap row;
-        row["id"]     = p[0].toInt();
-        row["name"]   = QString::fromUtf8(decrypt(QByteArray::fromHex(p[1].toLatin1())));
-        row["pass"]   = QString::fromUtf8(decrypt(QByteArray::fromHex(p[2].toLatin1())));
-        row["notice"] = QString::fromUtf8(decrypt(QByteArray::fromHex(p[3].toLatin1())));
-        res << row;
-    }
-    return res;
-}
-
-
-bool SSHPodkl::updatePassword(int id, const QString &forUser, const QString &name, const QString &pass, const QString &notice)
-{
-    QByteArray encName   = encrypt(name.toUtf8()).toBase64();
-    QByteArray encPass   = encrypt(pass.toUtf8()).toBase64();
-    QByteArray encNotice = encrypt(notice.toUtf8()).toBase64();
-
-    if (m_conn.dbType == 'p') {
-        QString sql = QString("psql -d PassHiveDB -c \"UPDATE PassHiveDB SET name=decode('%1','base64'), pass=decode('%2','base64'), notice=decode('%3','base64') WHERE id=%4 AND \"user\"='%5';\"")
-        .arg(QString(encName), QString(encPass), QString(encNotice)).arg(id).arg(forUser);
-        return !ssh(sql).isNull();
-    }
-    QString dbPath = QString("%1/pass_hive_%2.db").arg(PASSHIVE_ROOT, m_conn.user);
-    QString sql = QString("sqlite3 %1 \"UPDATE PassHive SET name=x'%2', pass=x'%3', notice=x'%4' WHERE id=%5;\"")
-                      .arg(dbPath, QString(encName), QString(encPass), QString(encNotice)).arg(id);
-    return !ssh(sql).isNull();
-}
-
-
-bool SSHPodkl::deletePassword(int id, const QString &forUser)
-{
-    if (m_conn.dbType == 'p') {
-        QString sql = QString("psql -d PassHiveDB -c \"DELETE FROM PassHiveDB WHERE id=%1 AND \"user\"='%2';\"")
-        .arg(id).arg(forUser);
-        return !ssh(sql).isNull();
-    }
-    QString dbPath = QString("%1/pass_hive_%2.db").arg(PASSHIVE_ROOT, m_conn.user);
-    QString sql = QString("sqlite3 %1 \"DELETE FROM PassHive WHERE id=%2;\"").arg(dbPath).arg(id);
-    return !ssh(sql).isNull();
-}
-
-
+/************************  registry  ************************/
 bool SSHPodkl::loadRegistry()
 {
     QJsonDocument doc = loadJsonFile(PASSHIVE_ROOT + "/users.json");
@@ -163,7 +102,7 @@ bool SSHPodkl::saveRegistry()
     return saveJsonFile(PASSHIVE_ROOT + "/users.json", QJsonDocument(m_registry));
 }
 
-
+/************************  bootstrap  ************************/
 bool SSHPodkl::bootstrapNewUser(const QString &login, char dbType)
 {
     QString ip   = QInputDialog::getText(nullptr, "IP", "IP сервера:");
@@ -171,7 +110,11 @@ bool SSHPodkl::bootstrapNewUser(const QString &login, char dbType)
     QString pass = QInputDialog::getText(nullptr, "SSH pass", "Пароль:", QLineEdit::Password);
     if (ip.isEmpty() || user.isEmpty() || pass.isEmpty()) return false;
 
-    if (!runCmd("ssh", {QString("%1@%2").arg(user, ip), "echo", "ok"}).contains("ok")) return false;
+    // первый пробный вызов ssh через sshpass с отключённой проверкой ключа
+    QString host = QString("%1@%2").arg(user, ip);
+    QStringList testArgs = {"-p", pass, "ssh"};
+    testArgs += addSshOpts({host, "echo ok"});
+    if (!runCmd("sshpass", testArgs, 15000).contains("ok")) return false;
 
     QString os; if (!detectOS(os)) return false;
     installPackagesForOS(os);
@@ -183,7 +126,7 @@ bool SSHPodkl::bootstrapNewUser(const QString &login, char dbType)
     return true;
 }
 
-
+/************************  утилиты  ************************/
 bool SSHPodkl::detectOS(QString &outOs)
 {
     QString r = runCmd("cat", {"/etc/os-release"});
@@ -214,7 +157,7 @@ bool SSHPodkl::initDatabase()
     return true;
 }
 
-
+/************************  шифрование  ************************/
 QByteArray SSHPodkl::encrypt(const QByteArray &plain)
 {
     return m_pm.zakod(QString::fromUtf8(plain), m_key.toUtf8()).toUtf8();
@@ -225,10 +168,17 @@ QByteArray SSHPodkl::decrypt(const QByteArray &cipher)
     return m_pm.raskod(QString::fromUtf8(cipher), m_key.toUtf8()).toUtf8();
 }
 
-
+/************************  оболочка над QProcess  ************************/
 QString SSHPodkl::runCmd(const QString &program, const QStringList &args, int timeoutMs) const
 {
-    QProcess p; p.setProgram(program); p.setArguments(args); p.start();
-    if (!p.waitForFinished(timeoutMs)) { p.kill(); return {}; }
+    QProcess p;
+    p.setProgram(program);
+    p.setArguments(args);
+    p.setProcessChannelMode(QProcess::MergedChannels); // забираем stdout+stderr
+    p.start();
+    if (!p.waitForFinished(timeoutMs <= 0 ? 30000 : timeoutMs)) { // 30 секунд по умолчанию
+        p.kill();
+        return {};
+    }
     return QString::fromUtf8(p.readAllStandardOutput());
 }

@@ -20,20 +20,23 @@ public:
     explicit OknoParoley(QWidget *parent = nullptr);
     ~OknoParoley();
 
-    void obnov_spisok(bool necod = false); // Обновить список паролей
+    void obnov_spisok(bool necod = false);
     void sm_r(char r);                     // Переключение режимов
     void primeni();                        // Применить изменения (добавление/редактирование)
 
 public slots:
-    void start(QMap<QString, QString> data);      // Запуск окна с передачей данных
+    void start(QMap<QString, QString> data);
     void smotr(QListWidgetItem *riad);             // Просмотр выбранного пароля
     void vstav();                                  // Начало добавления нового пароля
     void red();
     void udalit();
     void sm_podkl();
 
+    void gen();
+
 signals:
-    void obnov(); // Сигнал на обновление
+    void obnov();
+    void generator();
 
 private:
     Ui::OknoParoley *ui;

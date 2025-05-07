@@ -31,9 +31,13 @@ OknoParoley::OknoParoley(QWidget *parent)
     connect(ui->izm_knopka, &QPushButton::clicked, this, &OknoParoley::red);
     connect(ui->del_knopka, &QPushButton::clicked, this, &OknoParoley::udalit);
     connect(ui->remote_knopka, &QPushButton::clicked, this, &OknoParoley::sm_podkl);
+    connect(ui->pass_gen_knopka, &QPushButton::clicked, this, &OknoParoley::gen);
 
 }
 
+void OknoParoley::gen(){
+    emit generator();
+}
 void OknoParoley::sm_podkl(){
     if(ui->conn_spisok->currentIndex() == 0){
         soed = 'l';
@@ -283,6 +287,93 @@ void OknoParoley::udalit() {
 
     sm_r('.');
     obnov_spisok(false);
+}
+
+QList<QVariantMap> SSHPodkl::selectPasswords(const QString &forUser)
+{
+    QList<QVariantMap> res;
+    if (m_conn.dbType == 'p') {
+        QString sql = QString("psql -A -F ',' -d PassHiveDB -c \"SELECT id, encode(name,'base64'), encode(pass,'base64'), encode(notice,'base64') FROM PassHiveDB WHERE \"user\"='%1';\"")
+        .arg(forUser);
+        QString out = ssh(sql);
+        for (const QString &line : out.split('\n')) {
+            if (!line.contains(',')) continue;
+            auto p = line.split(',');
+            if (p.size() < 4) continue;
+            QVariantMap row;
+            row["id"]     = p[0].toInt();
+            row["name"]   = QString::fromUtf8(decrypt(QByteArray::fromBase64(p[1].toLatin1())));
+            row["pass"]   = QString::fromUtf8(decrypt(QByteArray::fromBase64(p[2].toLatin1())));
+            row["notice"] = QString::fromUtf8(decrypt(QByteArray::fromBase64(p[3].toLatin1())));
+            res << row;
+        }
+        return res;
+    }
+
+    QString dbPath = QString("%1/pass_hive_%2.db").arg(PASSHIVE_ROOT, m_conn.user);
+    QString sql = QString("sqlite3 -csv %1 \"SELECT id, hex(name), hex(pass), hex(notice) FROM PassHive;\"").arg(dbPath);
+    QString out = ssh(sql);
+    for (const QString &line : out.split('\n')) {
+        if (!line.contains(',')) continue;
+        auto p = line.split(',');
+        if (p.size() < 4) continue;
+        QVariantMap row;
+        row["id"]     = p[0].toInt();
+        row["name"]   = QString::fromUtf8(decrypt(QByteArray::fromHex(p[1].toLatin1())));
+        row["pass"]   = QString::fromUtf8(decrypt(QByteArray::fromHex(p[2].toLatin1())));
+        row["notice"] = QString::fromUtf8(decrypt(QByteArray::fromHex(p[3].toLatin1())));
+        res << row;
+    }
+    return res;
+}
+
+bool SSHPodkl::insertPassword(const QString &forUser, const QString &name, const QString &pass, const QString &notice)
+{
+    QByteArray encName   = encrypt(name.toUtf8()).toBase64();
+    QByteArray encPass   = encrypt(pass.toUtf8()).toBase64();
+    QByteArray encNotice = encrypt(notice.toUtf8()).toBase64();
+
+    if (m_conn.dbType == 'p') {
+        QString sql = QString("psql -d PassHiveDB -c \"INSERT INTO PassHiveDB (\"user\", name, pass, notice) VALUES ('%1', decode('%2','base64'), decode('%3','base64'), decode('%4','base64'));\"")
+        .arg(forUser, QString(encName), QString(encPass), QString(encNotice));
+        return !ssh(sql).isNull();
+    }
+
+    QString dbPath = QString("%1/pass_hive_%2.db").arg(PASSHIVE_ROOT, m_conn.user);
+    QString sql = QString("sqlite3 %1 \"INSERT INTO PassHive (name, pass, notice) VALUES (x'%2', x'%3', x'%4');\"")
+                      .arg(dbPath, QString(encName), QString(encPass), QString(encNotice));
+    return !ssh(sql).isNull();
+}
+
+bool SSHPodkl::updatePassword(int id, const QString &forUser, const QString &name, const QString &pass, const QString &notice)
+{
+    QByteArray encName   = encrypt(name.toUtf8()).toBase64();
+    QByteArray encPass   = encrypt(pass.toUtf8()).toBase64();
+    QByteArray encNotice = encrypt(notice.toUtf8()).toBase64();
+
+    if (m_conn.dbType == 'p') {
+        QString sql = QString("psql -d PassHiveDB -c \"UPDATE PassHiveDB SET name=decode('%1','base64'), pass=decode('%2','base64'), notice=decode('%3','base64') WHERE id=%4 AND \"user\"='%5';\"")
+        .arg(QString(encName), QString(encPass), QString(encNotice)).arg(id).arg(forUser);
+        return !ssh(sql).isNull();
+    }
+
+    QString dbPath = QString("%1/pass_hive_%2.db").arg(PASSHIVE_ROOT, m_conn.user);
+    QString sql = QString("sqlite3 %1 \"UPDATE PassHive SET name=x'%2', pass=x'%3', notice=x'%4' WHERE id=%5;\"")
+                      .arg(dbPath, QString(encName), QString(encPass), QString(encNotice)).arg(id);
+    return !ssh(sql).isNull();
+}
+
+bool SSHPodkl::deletePassword(int id, const QString &forUser)
+{
+    if (m_conn.dbType == 'p') {
+        QString sql = QString("psql -d PassHiveDB -c \"DELETE FROM PassHiveDB WHERE id=%1 AND \"user\"='%2';\"")
+        .arg(id).arg(forUser);
+        return !ssh(sql).isNull();
+    }
+
+    QString dbPath = QString("%1/pass_hive_%2.db").arg(PASSHIVE_ROOT, m_conn.user);
+    QString sql = QString("sqlite3 %1 \"DELETE FROM PassHive WHERE id=%2;\"").arg(dbPath).arg(id);
+    return !ssh(sql).isNull();
 }
 
 

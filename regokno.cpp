@@ -11,6 +11,7 @@ RegOkno::RegOkno(QWidget *parent)
     ui->setupUi(this);
     ui->osnov_dialog->setAlignment(Qt::AlignCenter);
     QObject::connect(ui->regist_knopka, &QPushButton::clicked, this, &RegOkno::check);
+    QObject::connect(ui->gen_knopka, &QPushButton::clicked, this, &RegOkno::generator);
 
 }
 
@@ -20,6 +21,10 @@ RegOkno::~RegOkno()
 }
 void RegOkno::regist(){
     show();
+}
+
+void RegOkno::generator(){
+    emit start_generator();
 }
 
 void RegOkno::check(){

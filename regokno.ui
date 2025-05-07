@@ -55,7 +55,7 @@
   <widget class="QPushButton" name="nazad_knopka">
    <property name="geometry">
     <rect>
-     <x>150</x>
+     <x>330</x>
      <y>320</y>
      <width>80</width>
      <height>41</height>
@@ -119,6 +119,19 @@
      <width>361</width>
      <height>41</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="gen_knopka">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>320</y>
+     <width>131</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>генератор паролей</string>
    </property>
   </widget>
  </widget>

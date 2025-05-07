@@ -140,14 +140,12 @@ QString PassManager::raskod(QString zag_data, QByteArray kl)
     QByteArray iv        = raw.left(16);
     QByteArray encrypted = raw.mid(16);
 
-    // 1. Расшифровываем
     QByteArray decrypted = aes.decode(encrypted, kl, iv);
-    // 2. Срезаем ISO-паддинг корректно
-    decrypted = aes.removePadding(decrypted);           // <- ключевая строка
-    // 3. Конвертируем в UTF-8
+
+    decrypted = aes.removePadding(decrypted);
     QString result = QString::fromUtf8(decrypted);
 
-    return result;   // лишний пост-фильтр больше не нужен
+    return result;
 }
 
 
